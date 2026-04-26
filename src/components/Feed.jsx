@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-export default function Feed({ session }) {
+export default function Feed() {
   const [posts, setPosts] = useState([])
   const [content, setContent] = useState('')
+  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -36,26 +37,17 @@ export default function Feed({ session }) {
 
     await supabase.from('posts').insert({
       content: content.trim(),
-      user_email: session.user.email,
+      user_name: name.trim() || '匿名',
     })
 
     setContent('')
     setLoading(false)
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-  }
-
-  const email = session.user.email
-  const displayName = email.split('@')[0]
-
   return (
     <div style={styles.container}>
       <div style={styles.sidebar}>
         <h1 style={styles.logo}>𝕏</h1>
-        <p style={styles.userInfo}>{displayName}</p>
-        <button onClick={handleLogout} style={styles.logoutBtn}>ログアウト</button>
       </div>
 
       <div style={styles.main}>
@@ -64,6 +56,13 @@ export default function Feed({ session }) {
         </div>
 
         <form onSubmit={handlePost} style={styles.postForm}>
+          <input
+            placeholder="名前（省略すると匿名）"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            maxLength={30}
+            style={styles.nameInput}
+          />
           <textarea
             placeholder="いまどうしてる？"
             value={content}
@@ -83,7 +82,7 @@ export default function Feed({ session }) {
           {posts.map(post => (
             <div key={post.id} style={styles.post}>
               <div style={styles.postHeader}>
-                <span style={styles.postUser}>{post.user_email.split('@')[0]}</span>
+                <span style={styles.postUser}>{post.user_name || '匿名'}</span>
                 <span style={styles.postDate}>{new Date(post.created_at).toLocaleString('ja-JP')}</span>
               </div>
               <p style={styles.postContent}>{post.content}</p>
@@ -111,29 +110,10 @@ const styles = {
     width: '240px',
     padding: '20px',
     borderRight: '1px solid #2f3336',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
   },
   logo: {
     fontSize: '28px',
     margin: '0',
-  },
-  userInfo: {
-    color: '#e7e9ea',
-    fontSize: '15px',
-    fontWeight: 'bold',
-    margin: '0',
-  },
-  logoutBtn: {
-    padding: '8px 16px',
-    borderRadius: '20px',
-    border: '1px solid #536471',
-    background: 'transparent',
-    color: '#e7e9ea',
-    cursor: 'pointer',
-    fontSize: '14px',
-    alignSelf: 'flex-start',
   },
   main: {
     flex: 1,
@@ -155,6 +135,19 @@ const styles = {
   postForm: {
     padding: '16px',
     borderBottom: '1px solid #2f3336',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  nameInput: {
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid #2f3336',
+    color: '#71767b',
+    fontSize: '14px',
+    padding: '4px 0',
+    outline: 'none',
+    width: '100%',
   },
   textarea: {
     width: '100%',
@@ -173,7 +166,6 @@ const styles = {
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: '12px',
-    marginTop: '8px',
   },
   charCount: {
     color: '#71767b',
@@ -188,7 +180,6 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     fontSize: '15px',
-    opacity: 1,
   },
   feed: {
     display: 'flex',
